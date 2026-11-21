@@ -1,0 +1,89 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+{% block title %}Full report{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Full report</h2>
+  <span class="muted">{{ start|date:"d M Y" }} to {{ end|date:"d M Y" }}{% if selected_batch %} · {{ selected_batch.name }}{% else %} · All batches{% endif %}</span>
+</div>
+
+<form method="get" class="card filters no-print">
+  <div>
+    <label for="batch">Batch</label>
+    <select id="batch" name="batch">
+      <option value="">All batches</option>
+      {% for b in batches %}<option value="{{ b.pk }}" {% if b.pk|stringformat:"s" == batch_id %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div><label for="from">From</label><input type="date" id="from" name="from" value="{{ start|date:'Y-m-d' }}"></div>
+  <div><label for="to">To</label><input type="date" id="to" name="to" value="{{ end|date:'Y-m-d' }}"></div>
+  <button class="btn" type="submit">Apply</button>
+  <a class="btn secondary" href="?batch={{ batch_id }}&from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}&export=csv">Download CSV</a>
+  <button class="btn secondary" type="button" onclick="window.print()">Print</button>
+</form>
+
+<div class="stats">
+  <div class="stat"><div class="n">{{ rows|length }}</div><div class="l">Students</div></div>
+  <div class="stat"><div class="n">{{ dates|length }}</div><div class="l">Days with attendance</div></div>
+  <div class="stat"><div class="n good">{{ totals.present }}</div><div class="l">Present</div></div>
+  <div class="stat"><div class="n">{{ totals.late }}</div><div class="l">Late</div></div>
+  <div class="stat"><div class="n low">{{ totals.absent }}</div><div class="l">Absent</div></div>
+  <div class="stat"><div class="n">{{ totals.excused }}</div><div class="l">Excused</div></div>
+  <div class="stat"><div class="n">{% if totals.pct is None %}-{% else %}{{ totals.pct }}%{% endif %}</div><div class="l">Overall attendance</div></div>
+  <div class="stat"><div class="n low">{{ low_count }}</div><div class="l">Below {{ threshold }}%</div></div>
+</div>
+
+{% if batch_groups and not selected_batch %}
+<div class="card">
+  <h3>Batch-wise summary</h3>
+  <table>
+    <thead><tr><th>Batch</th><th>Students</th><th>Present</th><th>Late</th><th>Absent</th><th>Excused</th><th>Attendance</th></tr></thead>
+    <tbody>
+    {% for g in batch_groups %}
+      <tr>
+        <td>{{ g.batch.name }}</td><td>{{ g.students }}</td><td>{{ g.present }}</td><td>{{ g.late }}</td>
+        <td>{{ g.absent }}</td><td>{{ g.excused }}</td>
+        <td>
+          {% if g.pct is None %}<span class="muted">-</span>
+          {% elif g.pct < threshold %}<span class="low">{{ g.pct }}%</span>
+          {% else %}<span class="good">{{ g.pct }}%</span>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>Student register</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Roll</th><th>Name</th><th>Batch</th>
+        {% for d in dates %}<th class="st">{{ d|date:"d/m" }}</th>{% endfor %}
+        <th>P</th><th>L</th><th>A</th><th>E</th><th>%</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for s in rows %}
+      <tr>
+        <td>{{ s.roll_no }}</td>
+        <td><a href="{% url 'attendance:student' s.pk %}?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}">{{ s.name }}</a></td>
+        <td>{{ s.batch.name }}</td>
+        {% for c in s.cells %}<td class="st {% if c %}st-{{ c }}{% endif %}">{{ c|default:"-" }}</td>{% endfor %}
+        <td>{{ s.present }}</td><td>{{ s.late }}</td><td>{{ s.absent }}</td><td>{{ s.excused }}</td>
+        <td>
+          {% if s.pct is None %}<span class="muted">-</span>
+          {% elif s.pct < threshold %}<span class="low">{{ s.pct }}%</span>
+          {% else %}<span class="good">{{ s.pct }}%</span>{% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="9" class="muted">No students match.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">P = Present, L = Late, A = Absent, E = Excused. Late counts as attended; Excused days are not counted. Only days that have attendance saved are shown.</p>
+</div>
+{% endblock %}

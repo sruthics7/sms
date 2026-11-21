@@ -1,0 +1,72 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+{% block title %}{{ student.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>{{ student.name }} <span class="muted">({{ student.roll_no }}, {{ student.batch.name }})</span></h2>
+  <div class="actions">
+    <a class="btn secondary" href="{% url 'attendance:student_update' student.pk %}">Edit student</a>
+    <a class="btn danger" href="{% url 'attendance:student_delete' student.pk %}">Delete</a>
+  </div>
+</div>
+
+<div class="card filters" style="justify-content:space-between">
+  <div class="actions">
+    {% if prev_id %}
+      <a class="btn secondary" href="{% url 'attendance:student' prev_id %}?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}">&larr; Previous</a>
+    {% else %}
+      <span class="btn secondary" style="opacity:.4">&larr; Previous</span>
+    {% endif %}
+    {% if next_id %}
+      <a class="btn" href="{% url 'attendance:student' next_id %}?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}">Next &rarr;</a>
+    {% else %}
+      <span class="btn" style="opacity:.4">Next &rarr;</span>
+    {% endif %}
+  </div>
+  <div class="muted">
+    {% if position %}Student {{ position }} of {{ total }} in {{ student.batch.name }} · {% endif %}
+    <a href="{% url 'attendance:report' student.batch.pk %}?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}">Back to batch report</a>
+  </div>
+</div>
+
+<form method="get" class="card filters">
+  <div><label for="from">From</label><input type="date" id="from" name="from" value="{{ start|date:'Y-m-d' }}"></div>
+  <div><label for="to">To</label><input type="date" id="to" name="to" value="{{ end|date:'Y-m-d' }}"></div>
+  <button class="btn" type="submit">Apply</button>
+</form>
+
+<div class="stats">
+  <div class="stat"><div class="n good">{{ present }}</div><div class="l">Present</div></div>
+  <div class="stat"><div class="n">{{ late }}</div><div class="l">Late</div></div>
+  <div class="stat"><div class="n low">{{ absent }}</div><div class="l">Absent</div></div>
+  <div class="stat"><div class="n">{{ excused }}</div><div class="l">Excused</div></div>
+  <div class="stat">
+    <div class="n">
+      {% if pct is None %}-{% elif pct < 75 %}<span class="low">{{ pct }}%</span>{% else %}<span class="good">{{ pct }}%</span>{% endif %}
+    </div>
+    <div class="l">Attendance</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Day-by-day record</h3>
+  <table>
+    <thead><tr><th>Date</th><th>Status</th><th>Remark</th><th></th></tr></thead>
+    <tbody>
+    {% for r in records %}
+      <tr>
+        <td>{{ r.date|date:"D, d M Y" }}</td>
+        <td><span class="st st-{{ r.status }}">{{ r.get_status_display }}</span></td>
+        <td>{{ r.remark }}</td>
+        <td class="actions">
+          <a class="btn secondary small" href="{% url 'attendance:record_update' r.pk %}">Edit</a>
+          <a class="btn danger small" href="{% url 'attendance:record_delete' r.pk %}">Delete</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="muted">No records in this range.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

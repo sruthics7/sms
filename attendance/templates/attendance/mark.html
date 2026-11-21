@@ -1,0 +1,59 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+{% block title %}Mark attendance - {{ batch.name }}{% endblock %}
+{% block content %}
+<h2>{{ batch.name }} - mark attendance</h2>
+
+<form method="get" class="card filters">
+  <div>
+    <label for="date">Date</label>
+    <input type="date" id="date" name="date" value="{{ day|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}">
+  </div>
+  <button class="btn secondary" type="submit">Go</button>
+  <a class="btn secondary" href="{% url 'attendance:mark_select' %}?date={{ day|date:'Y-m-d' }}">Change batch</a>
+  <a class="btn secondary" href="{% url 'attendance:report' batch.pk %}">View report</a>
+</form>
+
+{% if already_marked %}<div class="msg">Attendance for this date is already saved. Saving again will update it.</div>{% endif %}
+
+<form method="post" class="card">
+  {% csrf_token %}
+  <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
+  <p>
+    Set all:
+    {% for code, label in statuses %}
+      <button type="button" class="btn secondary" data-all="{{ code }}">{{ label }}</button>
+    {% endfor %}
+  </p>
+  <table>
+    <thead><tr><th>Roll</th><th>Name</th><th>Status</th><th>Remark</th></tr></thead>
+    <tbody>
+    {% for row in rows %}
+      <tr>
+        <td>{{ row.student.roll_no }}</td>
+        <td><a href="{% url 'attendance:student' row.student.pk %}">{{ row.student.name }}</a></td>
+        <td class="radios">
+          {% for code, label in statuses %}
+            <label><input type="radio" name="status_{{ row.student.pk }}" value="{{ code }}"
+              {% if row.status == code %}checked{% endif %}> {{ label }}</label>
+          {% endfor %}
+        </td>
+        <td><input type="text" name="remark_{{ row.student.pk }}" value="{{ row.remark }}" maxlength="255"></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="muted">No active students in this batch.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if rows %}<p><button class="btn" type="submit">Save attendance</button></p>{% endif %}
+</form>
+
+<script>
+  document.querySelectorAll("[data-all]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll('input[type=radio][value="' + btn.dataset.all + '"]')
+        .forEach(function (r) { r.checked = true; });
+    });
+  });
+</script>
+{% endblock %}

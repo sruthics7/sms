@@ -1,0 +1,32 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Attendance{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  {% with url=request.resolver_match.url_name %}
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">Attendance</div>
+      <nav>
+        <a href="{% url 'attendance:dashboard' %}" class="{% if url == 'dashboard' %}active{% endif %}">Dashboard</a>
+        <a href="{% url 'attendance:mark_select' %}" class="{% if url == 'mark_select' or url == 'mark' %}active{% endif %}">Mark attendance</a>
+        <a href="{% url 'attendance:batch_list' %}" class="{% if url == 'batch_list' or url == 'batch_create' or url == 'batch_update' or url == 'batch_delete' or url == 'report' %}active{% endif %}">Batches</a>
+        <a href="{% url 'attendance:student_list' %}" class="{% if url == 'student_list' or url == 'student_create' or url == 'student_update' or url == 'student_delete' or url == 'student' or url == 'record_update' or url == 'record_delete' %}active{% endif %}">Students</a>
+        <a href="{% url 'attendance:full_report' %}" class="{% if url == 'full_report' %}active{% endif %}">Full report</a>
+      </nav>
+      <div class="who">{{ request.user.get_username }}</div>
+    </aside>
+    <div class="content">
+      <div class="content-inner">
+        {% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+</body>
+</html>

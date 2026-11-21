@@ -1,0 +1,44 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+{% block title %}Report - {{ batch.name }}{% endblock %}
+{% block content %}
+<h2>{{ batch.name }} - attendance report</h2>
+
+<form method="get" class="card filters">
+  <div><label for="from">From</label><input type="date" id="from" name="from" value="{{ start|date:'Y-m-d' }}"></div>
+  <div><label for="to">To</label><input type="date" id="to" name="to" value="{{ end|date:'Y-m-d' }}"></div>
+  <button class="btn" type="submit">Apply</button>
+  <a class="btn secondary" href="?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}&export=csv">Download CSV</a>
+  <a class="btn secondary" href="{% url 'attendance:mark' batch.pk %}">Mark attendance</a>
+  {% if first_id %}
+  <a class="btn secondary" href="{% url 'attendance:student' first_id %}?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}">View one by one</a>
+  {% endif %}
+  <a class="btn secondary" href="{% url 'attendance:full_report' %}?batch={{ batch.pk }}&from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}">All students on one page</a>
+</form>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr><th>Roll</th><th>Name</th><th>Present</th><th>Late</th><th>Absent</th><th>Excused</th><th>Attendance</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for s in rows %}
+      <tr>
+        <td>{{ s.roll_no }}</td>
+        <td><a href="{% url 'attendance:student' s.pk %}?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}">{{ s.name }}</a></td>
+        <td>{{ s.present }}</td><td>{{ s.late }}</td><td>{{ s.absent }}</td><td>{{ s.excused }}</td>
+        <td>
+          {% if s.pct is None %}<span class="muted">-</span>
+          {% elif s.pct < 75 %}<span class="low">{{ s.pct }}%</span>
+          {% else %}<span class="good">{{ s.pct }}%</span>{% endif %}
+        </td>
+        <td><a class="btn small" href="{% url 'attendance:student' s.pk %}?from={{ start|date:'Y-m-d' }}&to={{ end|date:'Y-m-d' }}">Full report</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="8" class="muted">No students.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">Late counts as attended. Excused days are not counted. Below 75% is highlighted.</p>
+</div>
+{% endblock %}

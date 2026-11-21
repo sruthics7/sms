@@ -1,0 +1,84 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Dashboard</h2>
+  <span class="muted">{{ today|date:"l, d M Y" }}</span>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="n">{{ total_students }}</div><div class="l">Active students</div></div>
+  <div class="stat"><div class="n">{{ total_batches }}</div><div class="l">Batches</div></div>
+  <div class="stat"><div class="n good">{{ present|add:late }}</div><div class="l">Present today ({{ late }} late)</div></div>
+  <div class="stat"><div class="n low">{{ absent }}</div><div class="l">Absent today</div></div>
+  <div class="stat"><div class="n">{{ not_marked }}</div><div class="l">Not marked today</div></div>
+  <div class="stat">
+    <div class="n">{% if today_pct is None %}-{% else %}{{ today_pct }}%{% endif %}</div>
+    <div class="l">Today's attendance</div>
+  </div>
+  <div class="stat">
+    <div class="n">{% if month_pct is None %}-{% else %}{{ month_pct }}%{% endif %}</div>
+    <div class="l">This month</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>Last 7 days</h3>
+    <div class="bars">
+      {% for d in trend %}
+      <div class="bar-col">
+        <div class="bar-wrap"><div class="bar" style="height: {{ d.bar }}%"></div></div>
+        <div class="bar-val">{% if d.pct is None %}-{% else %}{{ d.pct }}%{% endif %}</div>
+        <div class="bar-lbl">{{ d.date|date:"D d" }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Below {{ threshold }}% this month</h3>
+    <table>
+      {% for s in low %}
+      <tr>
+        <td><a href="{% url 'attendance:student' s.pk %}">{{ s.name }}</a><div class="muted">{{ s.batch.name }}</div></td>
+        <td class="low">{{ s.pct }}%</td>
+      </tr>
+      {% empty %}
+      <tr><td class="muted">Nobody is below the threshold.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="page-head" style="margin-bottom:8px">
+    <h3 style="margin:0">Batches</h3>
+    <a class="btn secondary small" href="{% url 'attendance:batch_create' %}">+ Add batch</a>
+  </div>
+  <table>
+    <thead><tr><th>Batch</th><th>Students</th><th>Today</th><th>This month</th><th></th></tr></thead>
+    <tbody>
+    {% for b in batches %}
+      <tr>
+        <td>{{ b.name }}</td>
+        <td>{{ b.student_count }}</td>
+        <td>{% if b.marked_today %}<span class="badge ok">Marked</span>{% else %}<span class="badge">Not marked</span>{% endif %}</td>
+        <td>
+          {% if b.month_pct is None %}<span class="muted">-</span>
+          {% elif b.month_pct < threshold %}<span class="low">{{ b.month_pct }}%</span>
+          {% else %}<span class="good">{{ b.month_pct }}%</span>{% endif %}
+        </td>
+        <td class="actions">
+          <a class="btn small" href="{% url 'attendance:mark' b.pk %}">Mark today</a>
+          <a class="btn secondary small" href="{% url 'attendance:report' b.pk %}">Report</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="muted">No batches yet. <a href="{% url 'attendance:batch_create' %}">Add your first batch</a>.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

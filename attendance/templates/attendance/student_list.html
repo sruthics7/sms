@@ -1,0 +1,55 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+{% block title %}Students{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h2>Students</h2>
+  <a class="btn" href="{% url 'attendance:student_create' %}{% if batch_id %}?batch={{ batch_id }}{% endif %}">+ Add student</a>
+</div>
+
+<form method="get" class="card filters">
+  <div><label for="q">Search</label><input type="search" id="q" name="q" value="{{ q }}" placeholder="Name, roll no, email"></div>
+  <div>
+    <label for="batch">Batch</label>
+    <select id="batch" name="batch">
+      <option value="">All</option>
+      {% for b in batches %}<option value="{{ b.pk }}" {% if b.pk|stringformat:"s" == batch_id %}selected{% endif %}>{{ b.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <option value="">All</option>
+      <option value="active" {% if status == "active" %}selected{% endif %}>Active</option>
+      <option value="inactive" {% if status == "inactive" %}selected{% endif %}>Inactive</option>
+    </select>
+  </div>
+  <button class="btn" type="submit">Filter</button>
+  <a class="btn secondary" href="{% url 'attendance:student_list' %}">Reset</a>
+</form>
+
+<div class="card">
+  <table>
+    <thead><tr><th>Roll</th><th>Name</th><th>Batch</th><th>Email</th><th>Phone</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for s in students %}
+      <tr>
+        <td>{{ s.roll_no }}</td>
+        <td><a href="{% url 'attendance:student' s.pk %}">{{ s.name }}</a></td>
+        <td>{{ s.batch.name }}</td>
+        <td class="muted">{{ s.email }}</td>
+        <td class="muted">{{ s.phone }}</td>
+        <td>{% if s.is_active %}<span class="badge ok">Active</span>{% else %}<span class="badge">Inactive</span>{% endif %}</td>
+        <td class="actions">
+          <a class="btn secondary small" href="{% url 'attendance:student' s.pk %}">View</a>
+          <a class="btn secondary small" href="{% url 'attendance:student_update' s.pk %}">Edit</a>
+          <a class="btn danger small" href="{% url 'attendance:student_delete' s.pk %}">Delete</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" class="muted">No students found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

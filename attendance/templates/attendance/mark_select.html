@@ -1,0 +1,32 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+{% block title %}Mark attendance{% endblock %}
+{% block content %}
+<h2>Mark attendance</h2>
+
+<form method="get" class="card filters">
+  <div>
+    <label for="date">Date</label>
+    <input type="date" id="date" name="date" value="{{ day|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}">
+  </div>
+  <button class="btn secondary" type="submit">Update</button>
+</form>
+
+<div class="card">
+  <table>
+    <thead><tr><th>Batch</th><th>Students</th><th>{{ day|date:"d M Y" }}</th><th></th></tr></thead>
+    <tbody>
+    {% for b in batches %}
+      <tr>
+        <td>{{ b.name }}</td>
+        <td>{{ b.student_count }}</td>
+        <td>{% if b.marked %}<span class="badge ok">Marked</span>{% else %}<span class="badge">Not marked</span>{% endif %}</td>
+        <td><a class="btn small" href="{% url 'attendance:mark' b.pk %}?date={{ day|date:'Y-m-d' }}">{% if b.marked %}Edit attendance{% else %}Mark attendance{% endif %}</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="muted">No batches yet. <a href="{% url 'attendance:batch_create' %}">Add a batch</a> first.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
